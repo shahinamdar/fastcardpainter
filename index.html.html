@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast Card Printer - 2 Pages</title>
+    <style>
+        @page { size: A4; margin: 0; }
+        body { font-family: sans-serif; background: #ddd; margin: 0; padding: 20px; text-align: center; }
+        
+        /* Control Panel */
+        .controls { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 400px; }
+        .controls input { width: 100%; margin: 10px 0; padding: 8px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; }
+        .sliders { display: flex; gap: 10px; margin: 10px 0; font-size: 13px; }
+        button { width: 100%; padding: 15px; background: #28a745; color: white; border: none; cursor: pointer; font-size: 18px; border-radius: 8px; font-weight: bold; }
+        button:hover { background: #218838; }
+
+        /* A4 Page Layout */
+        .page {
+            width: 210mm; height: 297mm;
+            background: white; margin: 20px auto;
+            padding: 10mm 5mm;
+            display: grid;
+            grid-template-columns: 3.6in 3.6in;
+            grid-template-rows: repeat(4, 2.3in);
+            column-gap: 8mm; row-gap: 8mm;
+            justify-content: center;
+            page-break-after: always;
+            box-sizing: border-box;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            width: 3.6in; height: 2.3in;
+            border: 0.1mm solid #000;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .card img {
+            width: 100%; height: 100%;
+            object-fit: stretch;
+            filter: contrast(var(--con)) brightness(var(--bri));
+        }
+
+        @media print {
+            .controls { display: none; }
+            body { padding: 0; background: none; }
+            .page { margin: 0; box-shadow: none; border: none; }
+        }
+    </style>
+</head>
+<body style="--con: 1.1; --bri: 1.0;">
+
+    <div class="controls">
+        <h3 style="margin-top:0;">Fast Card Printer (3.6x2.3)</h3>
+        
+        <label>1. Front Image:</label>
+        <input type="file" id="frontIn" accept="image/*">
+        
+        <label>2. Back Image:</label>
+        <input type="file" id="backIn" accept="image/*">
+
+        <div class="sliders">
+            <div>Contrast: <input type="range" id="con" min="1" max="2" step="0.1" value="1.1"></div>
+            <div>Brightness: <input type="range" id="bri" min="0.8" max="1.5" step="0.1" value="1.0"></div>
+        </div>
+
+        <button onclick="window.print()">PRINT 2 PAGES</button>
+    </div>
+
+    <!-- Page 1 -->
+    <div class="page" id="p1"></div>
+    <!-- Page 2 -->
+    <div class="page" id="p2"></div>
+
+    <script>
+        const frontIn = document.getElementById('frontIn');
+        const backIn = document.getElementById('backIn');
+        const p1 = document.getElementById('p1');
+        const p2 = document.getElementById('p2');
+
+        let fUrl = "";
+        let bUrl = "";
+
+        // Contrast/Brightness update
+        document.querySelectorAll('input[type=range]').forEach(s => {
+            s.oninput = (e) => document.body.style.setProperty('--' + e.target.id, e.target.value);
+        });
+
+        function render() {
+            [p1, p2].forEach(page => {
+                page.innerHTML = '';
+                for (let i = 0; i < 4; i++) {
+                    const fDiv = document.createElement('div');
+                    fDiv.className = 'card';
+                    if(fUrl) fDiv.innerHTML = `<img src="${fUrl}">`;
+                    
+                    const bDiv = document.createElement('div');
+                    bDiv.className = 'card';
+                    if(bUrl) bDiv.innerHTML = `<img src="${bUrl}">`;
+
+                    page.appendChild(fDiv);
+                    page.appendChild(bDiv);
+                }
+            });
+        }
+
+        frontIn.onchange = (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                fUrl = URL.createObjectURL(file); // Direct URL for speed
+                render();
+            }
+        };
+
+        backIn.onchange = (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                bUrl = URL.createObjectURL(file);
+                render();
+            }
+        };
+
+        render(); // Initial empty cards
+    </script>
+</body>
+</html>
